@@ -46,9 +46,9 @@ fi
 # P3: python3 前置检查
 command -v python3 >/dev/null 2>&1 || { echo "❌ 缺少 python3"; exit 1; }
 
-SAFE_ZONE="$HOME/claude_safe_zone"
-CODEX_BF="$HOME/claude_safe_zone/codex-safe-zone-backfill-20260418"
-if [ ! -d "$CODEX_BF" ]; then
+: ${SAFE_ZONE:="$HOME/claude_safe_zone"}
+: ${CODEX_BF:="$HOME/claude_safe_zone/codex-safe-zone-backfill-20260418"}
+if [ -n "$CODEX_BF" ] && [ ! -d "$CODEX_BF" ]; then
     CODEX_BF=""
 fi
 SOURCE_BAK="$HOME/.claude.bak"
@@ -67,6 +67,11 @@ echo ""
 # 前置检查
 # ----------------------------------------------------------------------------
 echo "[PRE-CHECK] repo git 状态..."
+if [ ${#SCAN_ROOTS[@]} -eq 0 ]; then
+    warn "SCAN_ROOTS 未配置，跳过 git dirty 检查"
+    echo "   如需检查，在 ~/.config/claudefxxk/config.sh 中设置:"
+    echo "     SCAN_ROOTS=(\"\$HOME/project-a\" \"\$HOME/project-b\")"
+fi
 DIRTY_COUNT=0
 for repo in "${SCAN_ROOTS[@]}"; do
     [ -d "$repo/.git" ] || continue
@@ -274,9 +279,9 @@ done
 # ----------------------------------------------------------------------------
 echo "[P1] safe_zone 顶层 hooks..."
 if [ -d "$SAFE_ZONE/hooks" ]; then
-    mkdir -p "$OUTPUT_DIR/safe-zone-hooks"
-    cp -r "$SAFE_ZONE/hooks/"* "$OUTPUT_DIR/safe-zone-hooks/" 2>/dev/null || true
-    echo "  ✓ safe_zone/hooks/ 已复制到 $OUTPUT_DIR/safe-zone-hooks/"
+    mkdir -p "$OUTPUT_DIR/hooks"
+    cp -r "$SAFE_ZONE/hooks/"* "$OUTPUT_DIR/hooks/" 2>/dev/null || true
+    echo "  ✓ safe_zone/hooks/ 已复制到 $OUTPUT_DIR/hooks/"
 fi
 
 # ----------------------------------------------------------------------------

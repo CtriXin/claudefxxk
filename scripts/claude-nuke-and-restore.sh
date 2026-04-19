@@ -80,9 +80,9 @@ if [ "$HOME" != "$REAL_HOME" ]; then
     exit 1
 fi
 
-SAFE_ZONE="$HOME/claude_safe_zone"
-CODEX_BF="$HOME/claude_safe_zone/codex-safe-zone-backfill-20260418"
-if [ ! -d "$CODEX_BF" ]; then
+: ${SAFE_ZONE:="$HOME/claude_safe_zone"}
+: ${CODEX_BF:="$HOME/claude_safe_zone/codex-safe-zone-backfill-20260418"}
+if [ -n "$CODEX_BF" ] && [ ! -d "$CODEX_BF" ]; then
     CODEX_BF=""
 fi
 # P0: 找到最新的 backup-run 目录（backup-missing-to-safe-zone.sh 的输出）
@@ -202,6 +202,11 @@ read -p "  API key 已处理完成? [y/N]: " TOKEN_OK
 [ "$TOKEN_OK" != "y" ] && [ "$TOKEN_OK" != "Y" ] && exit 1
 
 echo "[0.3] 关键 repo 检查..."
+if [ ${#SCAN_ROOTS[@]} -eq 0 ]; then
+    warn "SCAN_ROOTS 未配置，跳过 git dirty 检查"
+    echo "   如需检查，在 ~/.config/claudefxxk/config.sh 中设置:"
+    echo "     SCAN_ROOTS=(\"\$HOME/project-a\" \"\$HOME/project-b\")"
+fi
 DIRTY_COUNT=0
 for repo in "${SCAN_ROOTS[@]}"; do
     [ -d "$repo/.git" ] || continue
