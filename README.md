@@ -202,7 +202,7 @@ DRY_RUN=1 ./scripts/claude-nuke-and-restore.sh
 按提示逐步确认。关键决策点：
 - Phase 0: API key 已处理？repo 已 push？
 - Phase 1: MMS 工作已保存？（如果 MMS 正在运行）
-- Phase 8: Chrome 处理（s=跳过, k=自动关闭, 回车=确认）
+- Phase 8: 先轻清当前活跃 Chrome profile 的 `Local Storage / Session Storage`，再在你确认已安全关闭 Chrome 后决定是否深度删除 `IndexedDB / Cookie DB`
 - Phase 15: 是否 npm 重新安装
 - Phase 16: 自动对比新旧 userID
 

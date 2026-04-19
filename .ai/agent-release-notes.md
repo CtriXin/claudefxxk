@@ -87,3 +87,14 @@ Bugfix 轮：修复 2 个 runtime bug + 1 non-blocking + mode change。
 **遗留非 blocking 提醒:**
 1. setup-proxy.sh 是"已安装就退出"型 idempotent，非"原地更新型"，后续升级 proxy block 时需注意
 2. 个人版 (`../claudefxxk/`) EXECUTE.md / v3/最终方案.md 仍有旧的 LA / socks5 / `cat >> ~/.zshrc` 叙述，建议后续单独清理
+
+## 2026-04-19 11:32:00 EDT | Codex
+- 已落地 commit / tag / release：none
+- 改动文件范围：`scripts/claude-nuke-and-restore.sh`, `README.md`, `README.en.md`, `docs/EXECUTE.md`, `.ai/agent-release-notes.md`
+- 改动内容摘要：把开源版 Phase 8 同步到当前私有版交互：默认先通过运行中的 Chrome 轻清 `claude.ai / anthropic.com` 的 `Local Storage / Session Storage`，只有在用户确认 Chrome 已安全关闭后，才允许继续删除 `IndexedDB / Cookie DB`。同时修复首次 OAuth 后 `userID` 对比提示，避免在没有旧 `userID` 快照时误报为“已更新”；并把 README / README.en / EXECUTE 中过时的 Chrome 交互说明一并更新。
+- 可直接复用的 release note bullets：
+  - feat: Phase 8 now defaults to live `Local Storage / Session Storage` cleanup before any deep Chrome profile deletion
+  - fix: deep `IndexedDB / Cookie DB` cleanup is now gated by explicit post-shutdown confirmation
+  - fix: userID verification no longer reports a false old/new comparison when no previous snapshot exists
+  - docs: README, README.en, and EXECUTE now match the new Chrome cleanup flow
+- 本轮验证结果：`bash -n scripts/claude-nuke-and-restore.sh` ✅；Phase 8 AppleScript 片段 `osacompile` 编译通过 ✅；`HOME=/Users/xin DRY_RUN=1 ./scripts/claude-nuke-and-restore.sh` 交互 dry-run 跑通，阶段 8 新提示和确认链路正常 ✅

@@ -202,7 +202,7 @@ Prints all 18 phases' commands but **does NOT actually delete anything**.
 Follow prompts. Key decision points:
 - Phase 0: API key handled? Repos pushed?
 - Phase 1: MMS work saved? (if MMS is running)
-- Phase 8: Chrome handling (s=skip, k=auto-kill, Enter=confirm)
+- Phase 8: first lightly clear the active Chrome profile's `Local Storage / Session Storage`, then decide whether to deep-delete `IndexedDB / Cookie DB` after you confirm Chrome has been safely closed
 - Phase 15: npm reinstall?
 - Phase 16: Automatic old vs new userID comparison
 

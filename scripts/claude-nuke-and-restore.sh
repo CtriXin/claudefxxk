@@ -37,6 +37,89 @@ dry() {
     fi
 }
 
+clear_chrome_site_storage_live() {
+    local cleanup_result
+
+    if ! pgrep -x "Google Chrome" >/dev/null 2>&1; then
+        return 1
+    fi
+
+    if [ "$DRY_RUN" = "1" ]; then
+        echo -e "  ${BLUE}[DRY-RUN]${NC} 会通过 Chrome 自动化清理 claude.ai / console.anthropic.com / www.anthropic.com 的 Local Storage / Session Storage"
+        return 0
+    fi
+
+    command -v osascript >/dev/null 2>&1 || return 1
+
+    cleanup_result=$(
+        osascript 2>/dev/null <<'APPLESCRIPT'
+set targetUrls to {"https://claude.ai", "https://console.anthropic.com", "https://www.anthropic.com"}
+set createdWindow to false
+set cleanupOk to true
+
+tell application "Google Chrome"
+    if (count of windows) = 0 then
+        make new window
+        set createdWindow to true
+    end if
+
+    repeat with targetUrl in targetUrls
+        set cleanupTab to make new tab at end of tabs of front window with properties {URL:(contents of targetUrl)}
+        repeat 40 times
+            delay 0.25
+            if (loading of cleanupTab is false) then exit repeat
+        end repeat
+        set jsResult to execute cleanupTab javascript "try { window.localStorage.clear(); window.sessionStorage.clear(); 'ok'; } catch (e) { 'fail'; }"
+        if jsResult is not "ok" then set cleanupOk to false
+        close cleanupTab
+    end repeat
+
+    if createdWindow and (count of tabs of front window) = 1 then
+        close front window
+    end if
+end tell
+
+if cleanupOk then
+    return "ok"
+else
+    error "site storage cleanup incomplete"
+end if
+APPLESCRIPT
+    ) || return 1
+
+    [ "$cleanup_result" = "ok" ]
+}
+
+deep_clean_chrome_site_databases() {
+    local chrome_base="$HOME/Library/Application Support/Google/Chrome"
+    local sqlite_available=false
+    local profile
+
+    if command -v sqlite3 >/dev/null 2>&1; then
+        sqlite_available=true
+    else
+        echo -e "  ${YELLOW}⚠️ 未找到 sqlite3，将跳过 Cookie DB 删除，只删除 IndexedDB${NC}"
+    fi
+
+    [ -d "$chrome_base" ] || return 0
+
+    for profile in "$chrome_base/Default" "$chrome_base/Profile "*; do
+        [ -d "$profile" ] || continue
+        dry find "$profile/IndexedDB" -maxdepth 1 \
+            \( -name "*claude.ai*.indexeddb.leveldb" -o -name "*claude.ai*.indexeddb.blob" \
+               -o -name "*anthropic.com*.indexeddb.leveldb" -o -name "*anthropic.com*.indexeddb.blob" \) \
+            -exec rm -rf {} + 2>/dev/null || true
+        if [ "$sqlite_available" = true ] && [ -f "$profile/Cookies" ]; then
+            dry sqlite3 "$profile/Cookies" \
+                "DELETE FROM cookies WHERE host_key LIKE '%claude.ai%' OR host_key LIKE '%anthropic.com%'; PRAGMA wal_checkpoint(TRUNCATE);" \
+                2>/dev/null || true
+        fi
+    done
+
+    dry find "$chrome_base" -name "com.anthropic.claude_browser_extension.json" -delete 2>/dev/null || true
+    dry find "$HOME/Library/Application Support/com.openai.atlas" -name "*claude*" -type d -exec rm -rf {} + 2>/dev/null || true
+}
+
 # ============================================================================
 # 开源版配置读取
 # ============================================================================
@@ -506,68 +589,55 @@ if run_phase "7" "MMS/MMC 网关层" "删除 MMS/MMC 中的 Claude 身份与会�
 fi
 
 # --- 8: 浏览器数据 ---
-if run_phase "8" "浏览器数据" "清理 Chrome 中与 Claude 相关的 Cookie、IndexedDB、Local Storage；其他网站登录不受影响"; then
-    SKIP_CHROME=false
-    # P1: 检查 Chrome 是否在运行
+if run_phase "8" "浏览器数据" "默认先轻清理 Chrome 中 claude.ai / anthropic.com 的 Local Storage / Session Storage；若你在安全关闭 Chrome 后确认，还可进一步删除 IndexedDB / Cookie DB（风险更高）"; then
     if pgrep -x "Google Chrome" >/dev/null 2>&1; then
-        echo -e "  ${YELLOW}⚠️ Google Chrome 正在运行${NC}"
-        echo "  本阶段只会清理 Claude 的 OAuth / Cookie / Local Storage / IndexedDB；不会影响其他网站的登录状态。"
-        echo "  清理后需要重新 OAuth 登录 Claude。"
-        echo "  选择:"
-        echo "    [s] 跳过本阶段"
-        echo "    [k] 自动关闭 Chrome 后清理"
-        echo "    [c] 我已手动退出 Chrome，现在开始清理"
-        echo "    [Enter] 按跳过处理"
-        read -p "  请选择 [s/k/c]（Enter=跳过）: " CHROME_CHOICE
-        if [ "$CHROME_CHOICE" = "s" ] || [ "$CHROME_CHOICE" = "S" ]; then
-            echo "  ⊘ 跳过浏览器清理"
-            SKIP_CHROME=true
-        elif [ "$CHROME_CHOICE" = "k" ] || [ "$CHROME_CHOICE" = "K" ]; then
-            echo "  → 正在关闭 Chrome..."
-            dry pkill -9 -x "Google Chrome" 2>/dev/null || true
-            sleep 2
-            if [ "$DRY_RUN" = "1" ]; then
-                echo -e "  ${BLUE}[DRY-RUN]${NC} Chrome 不会真的关闭；后续如果检测到仍在运行属于预期"
-            fi
-            if pgrep -x "Google Chrome" >/dev/null 2>&1; then
-                echo -e "  ${YELLOW}⚠️ Chrome 仍在运行，已按跳过处理${NC}"
-                SKIP_CHROME=true
-            else
-                echo "  ✓ Chrome 已关闭，继续清理"
-            fi
-        elif [ "$CHROME_CHOICE" = "c" ] || [ "$CHROME_CHOICE" = "C" ]; then
-            if pgrep -x "Google Chrome" >/dev/null 2>&1; then
-                echo -e "  ${YELLOW}⚠️ Chrome 仍在运行，已按跳过处理${NC}"
-                SKIP_CHROME=true
-            else
-                echo "  ✓ 已确认 Chrome 退出，继续清理"
-            fi
+        echo "  先执行默认轻清理：Local Storage / Session Storage"
+        echo "  这一步会通过当前活跃的 Chrome profile 清理 claude.ai / anthropic.com 的前端站点状态。"
+        echo "  它不会直接改写 IndexedDB / Cookie DB，通常比直接改 profile 数据库更稳。"
+        if clear_chrome_site_storage_live; then
+            echo "  ✓ 已尝试清理当前活跃 profile 的 Local Storage / Session Storage"
         else
-            echo "  ⊘ 按跳过处理"
-            SKIP_CHROME=true
+            echo -e "  ${YELLOW}⚠️ 未能通过 Chrome 自动化清理 Local Storage / Session Storage${NC}"
+            echo "    可能是浏览器自动化权限未授权，或目标站点未能正常加载。"
         fi
+    else
+        echo "  Chrome 当前未运行。Session Storage 会随浏览器退出自然释放。"
+        echo "  Local Storage 的定向轻清理依赖浏览器上下文，本次不会自动清它。"
+        echo "  如果你也想清 Local Storage，请先启动 Chrome，再重跑这一阶段。"
     fi
-    if [ "$SKIP_CHROME" != true ]; then
-        # P1: 检查 sqlite3 可用性
-        SQLITE_AVAILABLE=false
-        if command -v sqlite3 >/dev/null 2>&1; then
-            SQLITE_AVAILABLE=true
+
+    echo ""
+    echo "  当前默认不会直接删除的深度站点数据："
+    echo "    - IndexedDB: 站点持久缓存、草稿、最近状态可能仍保留"
+    echo "    - Cookie DB: OAuth / 登录态 Cookie 可能仍保留"
+    echo "  如果继续删除它们，清理会更彻底，但也更容易触发 Chrome 首次启动卡顿或 profile 恢复。"
+    read -p "  按 Enter 继续，决定是否做深度清理..."
+
+    if pgrep -x "Google Chrome" >/dev/null 2>&1; then
+        echo -e "  ${YELLOW}⚠️ 当前仍检测到 Chrome 在运行${NC}"
+    fi
+
+    read -p "  Chrome 是否已经安全关闭? [y/N]: " CHROME_SAFE_CLOSED
+    if [ "$CHROME_SAFE_CLOSED" = "y" ] || [ "$CHROME_SAFE_CLOSED" = "Y" ]; then
+        if pgrep -x "Google Chrome" >/dev/null 2>&1; then
+            echo -e "  ${YELLOW}⚠️ Chrome 仍在运行，跳过 IndexedDB / Cookie DB 清理${NC}"
+            echo "    请先完全退出 Chrome，再重新执行阶段 8 的深度清理。"
         else
-            echo -e "  ${YELLOW}⚠️ 未找到 sqlite3，跳过 Cookie 清理${NC}"
+            echo "  即将删除："
+            echo "    - claude.ai / anthropic.com 的 IndexedDB"
+            echo "    - claude.ai / anthropic.com 的 Cookie DB 记录"
+            echo "    - Claude browser extension bridge / Atlas 中的 claude 元数据"
+            echo -e "  ${YELLOW}⚠️ 风险：这一步更彻底，但可能引起 Chrome 首次启动卡顿、站点缓存重建或 profile 恢复${NC}"
+            read -p "  是否继续删除 IndexedDB / Cookie DB? [y/N]: " DEEP_CHROME_CLEAN
+            if [ "$DEEP_CHROME_CLEAN" = "y" ] || [ "$DEEP_CHROME_CLEAN" = "Y" ]; then
+                deep_clean_chrome_site_databases
+                echo "  ✓ IndexedDB / Cookie DB 已按确认执行深度清理"
+            else
+                echo "  ⊘ 已跳过 IndexedDB / Cookie DB 深度清理"
+            fi
         fi
-        CHROME_BASE="$HOME/Library/Application Support/Google/Chrome"
-        if [ -d "$CHROME_BASE" ]; then
-            for profile in "$CHROME_BASE/Default" "$CHROME_BASE/Profile "*; do
-                [ -d "$profile" ] || continue
-                dry find "$profile/IndexedDB" -name "*claude*" -type d -exec rm -rf {} + 2>/dev/null || true
-                [ "$SQLITE_AVAILABLE" = true ] && dry sqlite3 "$profile/Cookies" "DELETE FROM cookies WHERE host_key LIKE '%claude.ai%' OR host_key LIKE '%anthropic.com%';" 2>/dev/null || true
-                dry find "$profile/Local Storage" -name "*claude*" -delete 2>/dev/null || true
-                dry find "$profile/Session Storage" -name "*claude*" -delete 2>/dev/null || true
-            done
-        fi
-        dry find "$HOME/Library/Application Support/Google/Chrome" -name "com.anthropic.claude_browser_extension.json" -delete 2>/dev/null || true
-        dry find "$HOME/Library/Application Support/com.openai.atlas" -name "*claude*" -type d -exec rm -rf {} + 2>/dev/null || true
-        echo "  ✓ 浏览器已清理"
+    else
+        echo "  ⊘ 已跳过 IndexedDB / Cookie DB 深度清理"
     fi
 fi
 
@@ -719,12 +789,18 @@ else
     if [ -f "$HOME/.claude.json" ]; then
         NEW_USERID=$(python3 -c "import json; d=json.load(open('$HOME/.claude.json')); print(d.get('userID',''))" 2>/dev/null || echo "")
         if [ -n "$NEW_USERID" ]; then
-            if [ -n "$OLD_USERID" ] && [ "$NEW_USERID" = "$OLD_USERID" ]; then
-                echo -e "  ${YELLOW}⚠️  userID 未变化 (${NEW_USERID:0:16}...) — 可能清理不完全${NC}"
-                echo "    建议：检查 ~/.claude.json 残留、Keychain 未清、或浏览器 cookie 未清"
+            if [ -n "$OLD_USERID" ]; then
+                if [ "$NEW_USERID" = "$OLD_USERID" ]; then
+                    echo -e "  ${YELLOW}⚠️  userID 未变化 (${NEW_USERID:0:16}...) — 可能清理不完全${NC}"
+                    echo "    建议：检查 ~/.claude.json 残留、Keychain 未清、或浏览器 cookie 未清"
+                else
+                    echo -e "  ${GREEN}✓ userID 已更新${NC}"
+                    echo "    旧 ID: ${OLD_USERID:0:16}..."
+                    echo "    新 ID: ${NEW_USERID:0:16}..."
+                fi
             else
-                echo -e "  ${GREEN}✓ userID 已更新${NC}"
-                [ -n "$OLD_USERID" ] && echo "    旧 ID: ${OLD_USERID:0:16}..."
+                echo -e "  ${GREEN}✓ 已检测到新的 userID${NC}"
+                echo "    执行前未记录到旧 ID，本次无法做旧/新对比"
                 echo "    新 ID: ${NEW_USERID:0:16}..."
             fi
         else

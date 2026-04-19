@@ -54,7 +54,7 @@ EOF
 按提示逐步确认各阶段。关键决策点：
 - **Phase 0**: 确认 API key 已处理、repo 已 push
 - **Phase 1**: 确认 MMS 工作已保存（如果运行中）
-- **Phase 8**: Chrome 可选择跳过(s)、自动关闭(k)、或手动关闭后回车继续
+- **Phase 8**: 先轻清当前活跃 Chrome profile 的 `Local Storage / Session Storage`，然后在你确认已安全关闭 Chrome 后，再决定是否深度删除 `IndexedDB / Cookie DB`
 - **Phase 15**: 可选择 npm 重新安装或跳过
 - **Phase 16**: 首次启动后自动对比新旧 userID
 
