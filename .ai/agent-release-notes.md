@@ -43,3 +43,31 @@
 - 无硬编码个人路径（grep 验证）✅
 - GitHub push `master → main` forced update ✅
 - 脚本权限 `+x` ✅
+
+---
+
+## 2026-04-19 11:15+08:00 | Claude
+
+**Commit:** `53a768f` on `main`
+
+**改动文件范围:**
+- `scripts/claude-nuke-and-restore.sh`
+- `scripts/backup-missing-to-safe-zone.sh`
+- `scripts/setup-proxy.sh`
+
+**改动内容摘要:**
+Bugfix 轮：修复 2 个 runtime bug + 1 non-blocking + mode change。
+
+- **P0 fix**: SAFE_ZONE / CODEX_BF 改为 `\`: \${VAR:=default}\``，用户 config.sh 自定义值不再被硬编码覆盖
+- **P1 fix**: backup 脚本 hooks 输出目录从 `safe-zone-hooks/` 改为 `hooks/`，与恢复脚本的读取路径一致
+- **non-blocking**: SCAN_ROOTS=() 时添加 soft warning + 配置提示（两个脚本）
+- **setup-proxy.sh**: commit mode change (+x)
+
+**Release Note Bullets:**
+- fix: respect custom SAFE_ZONE / CODEX_BF from config.sh
+- fix: unify hooks backup/restore path (hooks/)
+- fix: add SCAN_ROOTS=() soft warning instead of silent skip
+
+**验证结果:**
+- `bash -n` 三个脚本全部通过 ✅
+- GitHub push `53a768f` ✅
