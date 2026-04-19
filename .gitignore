@@ -1,0 +1,14 @@
+# claudefxxk-open-source
+
+# OS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Local test artifacts
+*.log

@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(yarn *)",
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(git *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(which *)",
+      "Bash(chmod *)",
+      "Bash(cd *)",
+      "Bash(python3 *)",
+      "Bash(rsync *)",
+      "Skill(*)",
+      "Agent(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)*",
+      "Bash(git push --force *)"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "/bin/bash -c 'echo \"[Claude] $(date +%H:%M:%S) | $(whoami)@$(hostname -s)\"'"
+  },
+  "hooks": {},
+  "promptSuggestionEnabled": false,
+  "skipDangerousModePermissionPrompt": true
+}
