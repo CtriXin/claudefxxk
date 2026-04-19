@@ -71,3 +71,19 @@ Bugfix 轮：修复 2 个 runtime bug + 1 non-blocking + mode change。
 **验证结果:**
 - `bash -n` 三个脚本全部通过 ✅
 - GitHub push `53a768f` ✅
+
+---
+
+## 2026-04-19 11:20+08:00 | 用户复核 — 放行确认
+
+**结论**: 开源版 `48b2855` 通过复核，无 blocking findings，可对外按"已完成"推进。
+
+**确认项:**
+- P0 已确认修复：`: ${VAR:=...}` 不再覆盖 config.sh 自定义值
+- P1 已确认修复：hooks 备份/恢复路径一致 (`hooks/`)
+- non-blocking 已确认修复：SCAN_ROOTS=() 时明确 warning
+- 工作树干净，无未提交逻辑改动
+
+**遗留非 blocking 提醒:**
+1. setup-proxy.sh 是"已安装就退出"型 idempotent，非"原地更新型"，后续升级 proxy block 时需注意
+2. 个人版 (`../claudefxxk/`) EXECUTE.md / v3/最终方案.md 仍有旧的 LA / socks5 / `cat >> ~/.zshrc` 叙述，建议后续单独清理
