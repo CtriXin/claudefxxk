@@ -1,78 +1,78 @@
-# claudefxxk — Claude 指纹重置工具
+# claudefxxk — Claude Fingerprint Reset Toolkit
 
-让 Claude Code CLI 不认识这台电脑。
-
----
-
-## 这是什么
-
-`claudefxxk` 是一组 macOS 上的 bash 脚本，用于：
-
-1. **完全隔离** — 彻底清理 Claude Code CLI 的身份痕迹
-2. **指纹重置** — 重新安装 CLI 后生成全新 userID
-3. **白名单恢复** — 只恢复你备份的自定义资产（skills、hooks、plugins、CLAUDE.md 等）
-
-**核心设计原则：**
-- 显式配置，绝不静默扫描 `$HOME`
-- 条件执行，工具不存在时 soft warning，不静默跳过
-- Dry-Run 先行，destructive 操作只打印不执行
-- 白名单恢复，不恢复任何可能携带旧指纹的数据
+Make Claude Code CLI not recognize this machine.
 
 ---
 
-## 它会做什么
+## What This Is
 
-| 能力 |
-|------|
-| 终止所有 Claude / claude / claude-code 进程 |
-| 删除 `~/.claude.json`（Claude 身份文件） |
-| 删除 Keychain 中的 Claude 凭证 |
-| 清理 npm cache 中的 claude-code |
-| 删除 `~/.config/Claude` 和 Desktop App |
-| 清理浏览器中的 Claude 相关数据（可选） |
-| 清理 shell history 中的 claude 记录（可选） |
-| 重新安装 Claude Code CLI（可选） |
-| 白名单恢复你的 skills / hooks / plugins / CLAUDE.md |
-| 对比新旧 userID，确认身份已重置 |
+`claudefxxk` is a set of bash scripts for macOS that:
 
----
+1. **Fully isolates** — thoroughly cleans Claude Code CLI identity traces
+2. **Resets fingerprint** — reinstalls CLI to generate a brand new userID
+3. **Whitelist-recovers** — only restores your backed-up custom assets (skills, hooks, plugins, CLAUDE.md, etc.)
 
-## 它不会做什么
-
-| 不会做的事 | 说明 |
-|------------|------|
-| **不会删除你的代码文件** | 只清理 Claude 相关痕迹，不动你的项目代码 |
-| **不会删除 git repository** | 不碰任何 `.git/` 目录 |
-| **不会修改系统级配置** | 只修改可选的 git email 和 `.zshrc` proxy marker |
-| **不会扫描整个 `$HOME`** | 只清理你显式配置的 `CLEAN_ROOTS` |
-| **不会删除 MMS 主进程或配置** | 只终止 MMS 下的 Claude 子进程，保留 MMS |
-| **不保证绕过任何平台风控** | 这是一个开发/调试工具，不是绕过服务条款的产品 |
-| **不会自动帮你登录 Claude** | 重装后需要手动 OAuth 登录 |
+**Core Design Principles:**
+- Explicit config, never silently scan `$HOME`
+- Conditional execution, soft warning if tool not present, never silently skip
+- Dry-run first, destructive operations print but do not execute
+- Whitelist recovery, never restore anything that might carry old fingerprints
 
 ---
 
-## 不建议做的事情
+## What It Does
 
-1. **不要在 MMS / Claude CLI session 内运行主脚本**
-   - 脚本会检测 `$HOME` 虚拟化，如果在 MMS 内运行会直接退出
-   - 请在系统原生 Terminal / iTerm2 中运行
-
-2. **不要跳过 Dry-Run**
-   - 首次使用前务必先 `DRY_RUN=1` 跑一次，确认它要做什么
-
-3. **不要在没有备份的情况下运行**
-   - 先运行 `backup-missing-to-safe-zone.sh`，确认资产已备份
-
-4. **不要期望这是"一键解封"**
-   - 这是一个开发/调试工具，不是绕过平台规则的产品
+| Capability |
+|------------|
+| Kill all Claude / claude / claude-code processes |
+| Delete `~/.claude.json` (Claude identity file) |
+| Delete Claude credentials from Keychain |
+| Clean claude-code from npm cache |
+| Remove `~/.config/Claude` and Desktop App |
+| Clean browser Claude data (optional) |
+| Clean shell history (optional) |
+| Reinstall Claude Code CLI (optional) |
+| Whitelist-restore your skills / hooks / plugins / CLAUDE.md |
+| Compare old vs new userID to confirm reset |
 
 ---
 
-## 建议自己修改或让 LLM 再检查的部分
+## What It Does NOT Do
 
-以下配置强烈建议你在使用前仔细检查，必要时让 LLM 帮你 review：
+| What It Does NOT Do | Note |
+|---------------------|------|
+| **Will NOT delete your source code** | Only cleans Claude traces, never touches your project code |
+| **Will NOT delete git repositories** | Never touches any `.git/` directory |
+| **Will NOT modify system configs** | Only modifies optional git email and `.zshrc` proxy marker |
+| **Will NOT scan entire `$HOME`** | Only cleans explicitly configured `CLEAN_ROOTS` |
+| **Will NOT kill MMS main process** | Only terminates Claude child processes under MMS |
+| **Does NOT bypass platform risk controls** | This is a dev/debug tool, not a ToS circumvention product |
+| **Will NOT auto-login to Claude** | Manual OAuth required after reinstall |
 
-### 1. `~/.config/claudefxxk/config.sh` — 路径配置
+---
+
+## What NOT to Do
+
+1. **Never run inside an MMS / Claude CLI session**
+   - The script detects `$HOME` virtualization and exits if run inside MMS
+   - Run in native Terminal / iTerm2 instead
+
+2. **Never skip dry-run**
+   - Always run `DRY_RUN=1` first to see what it will do
+
+3. **Never run without backing up**
+   - Run `backup-missing-to-safe-zone.sh` first and verify the output
+
+4. **Do not expect a "one-click unban"**
+   - This is a dev/debug tool, not a platform circumvention product
+
+---
+
+## Customization Checklist — Review Before Use
+
+The following configs are **strongly recommended** to review before use. Ask your LLM to check them if unsure.
+
+### 1. `~/.config/claudefxxk/config.sh` — Path Config
 
 ```bash
 CLEAN_ROOTS=(
@@ -81,9 +81,9 @@ CLEAN_ROOTS=(
 )
 ```
 
-**务必确认**：这些目录确实包含你想要清理的 `.claude/` 痕迹，且没有放错路径。`CLEAN_ROOTS` 默认为空，不配置就不会清理任何项目级 `.claude` 数据。
+**Double-check**: These directories actually contain `.claude/` traces you want to clean, and contain no accidental paths. `CLEAN_ROOTS` defaults to empty — if not configured, no project-level `.claude` cleanup will occur.
 
-### 2. `templates/settings.json` — statusLine 路径
+### 2. `templates/settings.json` — statusLine Path
 
 ```json
 "statusLine": {
@@ -92,119 +92,119 @@ CLEAN_ROOTS=(
 }
 ```
 
-这是一个通用 fallback。如果你有自己的 `statusline-command.sh`，请在恢复后手动替换这个路径。
+This is a generic fallback. Replace with your own `statusline-command.sh` path after recovery if needed.
 
-### 3. MCP server 配置
+### 3. MCP Server Config
 
-`MCP_PROJECTS` 中的项目会被扫描 `mcp.json`。请确认这些项目的 `mcp.json` 不包含敏感凭证（如 API key、token）。
+Projects in `MCP_PROJECTS` are scanned for `mcp.json`. Ensure these files do not contain sensitive credentials (API keys, tokens).
 
-### 4. 权限配置（permissions.allow / deny）
+### 4. Permissions (permissions.allow / deny)
 
-默认配置允许较广泛的 bash 命令。如果你所在环境有特殊安全要求，请让 LLM 帮你审查 `templates/settings.json` 中的 `permissions` 字段。
+The default config allows a broad set of bash commands. Review the `permissions` field in `templates/settings.json` if your environment has special security requirements.
 
 ---
 
-## Dry-Run 模式详解
+## Dry-Run Mode Explained
 
-### 怎么跑
+### How to Run
 
 ```bash
 DRY_RUN=1 ./scripts/claude-nuke-and-restore.sh
 ```
 
-### Dry-Run 会做什么
+### What Dry-Run Does
 
-- 打印所有 `rm`、`pkill`、`cp` 等 destructive 命令（前缀 `[DRY-RUN]`）
-- 运行无害的只读检查（`pgrep`、`git status`、`ls`、`python3 -c` 等）
-- 让你看到脚本会访问哪些路径、清理哪些文件
+- Prints all destructive commands (`rm`, `pkill`, `cp`, etc.) with `[DRY-RUN]` prefix
+- Runs harmless read-only checks (`pgrep`, `git status`, `ls`, `python3`, etc.)
+- Shows exactly which paths will be accessed and cleaned
 
-### Dry-Run 不会做什么
+### What Dry-Run Does NOT Do
 
-- **不会执行任何文件删除**（rm 只打印）
-- **不会终止任何进程**（pkill 只打印）
-- **不会修改 .zshrc**（awk 只打印）
-- **不会实际 cp 任何文件**
+- **Does NOT execute any file deletion** (rm is only printed)
+- **Does NOT kill any process** (pkill is only printed)
+- **Does NOT modify .zshrc** (awk is only printed)
+- **Does NOT actually copy any file**
 
-### Dry-Run 的安全边界
+### Dry-Run Safety Boundaries
 
-Dry-run 仍然会做以下**只读操作**，这些不会影响你的文件：
+Dry-run still performs the following **read-only** operations, which do not affect your files:
 
-| 操作 | 说明 |
-|------|------|
-| `pgrep -x "claude"` | 只读进程查询 |
-| `git status --short` | 只读 git 状态 |
-| `ls -dt ...` | 只读目录列表 |
-| `python3 -c "json.load(...)"` | 只读 JSON 解析 |
-| `security dump-keychain` | 只读 keychain 查询（不会删除） |
-| `read -p "..."` | 交互式询问（你可以随时 Ctrl-C） |
+| Operation | Note |
+|-----------|------|
+| `pgrep -x "claude"` | Read-only process query |
+| `git status --short` | Read-only git status |
+| `ls -dt ...` | Read-only directory listing |
+| `python3 -c "json.load(...)"` | Read-only JSON parsing |
+| `security dump-keychain` | Read-only keychain query (no deletion) |
+| `read -p "..."` | Interactive prompt (you can Ctrl-C anytime) |
 
-如果你连这些只读操作都不想让它执行，可以在阅读完脚本后，手动注释掉相关行。
+If you want to avoid even these read-only operations, manually comment out the relevant lines after reading the script.
 
 ---
 
-## 执行步骤
+## Execution Guide
 
-### Step 0: 克隆
+### Step 0: Clone
 
 ```bash
 git clone git@github.com:CtriXin/claudefxxk.git
 cd claudefxxk
 ```
 
-### Step 1: 配置
+### Step 1: Configuration
 
 ```bash
 mkdir -p ~/.config/claudefxxk
 cat > ~/.config/claudefxxk/config.sh << 'EOF'
-# 用于 git dirty 检查
+# For git dirty check
 SCAN_ROOTS=(
     "$HOME/your-project-a"
     "$HOME/your-project-b"
 )
 
-# 用于项目级 .claude 清理（默认空数组，不扫描任何目录）
+# For project-level .claude cleanup (default empty, scans nothing)
 CLEAN_ROOTS=(
     "$HOME/your-project-a"
     "$HOME/your-project-b"
 )
 
-# MCP server 项目目录
+# MCP server project directories
 MCP_PROJECTS=(
     "$HOME/your-project-a"
 )
 EOF
 ```
 
-### Step 2: 备份资产
+### Step 2: Backup Assets
 
 ```bash
 ./scripts/backup-missing-to-safe-zone.sh
 ```
 
-输出到 `~/claude_safe_zone/backup-run-YYYYMMDD-HHMMSS/`。确认包含 hooks/、skills-entity/、CLAUDE.md 等。
+Outputs to `~/claude_safe_zone/backup-run-YYYYMMDD-HHMMSS/`. Verify it contains hooks/, skills-entity/, CLAUDE.md, etc.
 
-### Step 3: Dry-Run 测试
+### Step 3: Dry-Run Test
 
 ```bash
 DRY_RUN=1 ./scripts/claude-nuke-and-restore.sh
 ```
 
-这会打印所有 18 个阶段将要执行的命令，但**不会实际删除任何文件**。
+Prints all 18 phases' commands but **does NOT actually delete anything**.
 
-### Step 4: 正式执行
+### Step 4: Execute
 
 ```bash
 ./scripts/claude-nuke-and-restore.sh
 ```
 
-按提示逐步确认。关键决策点：
-- Phase 0: API key 已处理？repo 已 push？
-- Phase 1: MMS 工作已保存？（如果 MMS 正在运行）
-- Phase 8: Chrome 处理（s=跳过, k=自动关闭, 回车=确认）
-- Phase 15: 是否 npm 重新安装
-- Phase 16: 自动对比新旧 userID
+Follow prompts. Key decision points:
+- Phase 0: API key handled? Repos pushed?
+- Phase 1: MMS work saved? (if MMS is running)
+- Phase 8: Chrome handling (s=skip, k=auto-kill, Enter=confirm)
+- Phase 15: npm reinstall?
+- Phase 16: Automatic old vs new userID comparison
 
-### Step 5: 安装代理（可选）
+### Step 5: Install Proxy (Optional)
 
 ```bash
 ./scripts/setup-proxy.sh
@@ -213,40 +213,40 @@ source ~/.zshrc
 
 ---
 
-## 目录结构
+## Directory Structure
 
 ```
 .
 ├── scripts/
-│   ├── claude-nuke-and-restore.sh      # 主脚本（18 阶段）
-│   ├── backup-missing-to-safe-zone.sh  # 资产备份 + 脱敏
-│   └── setup-proxy.sh                  # 代理安装
+│   ├── claude-nuke-and-restore.sh      # Main script (18 phases)
+│   ├── backup-missing-to-safe-zone.sh  # Asset backup + sanitize
+│   └── setup-proxy.sh                  # Proxy installer
 ├── templates/
-│   ├── settings.json                   # 通用配置模板
-│   └── mcp.json                        # 空 MCP 模板
+│   ├── settings.json                   # Generic settings template
+│   └── mcp.json                        # Empty MCP template
 ├── docs/
-│   ├── EXECUTE.md                      # 执行手册
-│   └── review-notes.md                 # 设计决策
+│   ├── EXECUTE.md                      # Execution manual
+│   └── review-notes.md                 # Design decisions
 ├── .ai/
-│   └── agent-release-notes.md          # 发布记录
+│   └── agent-release-notes.md          # Release notes
 ├── LICENSE                             # MIT
-└── README.md                           # 本文档（中文版）
+└── README.en.md                        # This document (English)
 ```
 
 ---
 
-## 系统要求
+## System Requirements
 
 - macOS
-- bash 3.2+（macOS 默认）
+- bash 3.2+ (macOS default)
 - python3
-- npm（用于重新安装 Claude Code CLI）
+- npm (for reinstalling Claude Code CLI)
 
 ---
 
-## 免责声明
+## Disclaimer
 
-本项目仅供学习和开发调试使用。使用本工具产生的任何后果由使用者自行承担。本项目不保证能够绕过任何平台的风控机制，也不鼓励违反任何服务条款的行为。
+This project is for educational and development debugging purposes only. Users bear full responsibility for any consequences. This project does not guarantee bypassing any platform risk controls and does not encourage violating any terms of service.
 
 ---
 
@@ -256,4 +256,4 @@ MIT
 
 ---
 
-**[English Version →](README.en.md)**
+**[中文版 →](README.zh.md)**
