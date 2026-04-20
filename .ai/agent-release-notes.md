@@ -98,3 +98,12 @@ Bugfix 轮：修复 2 个 runtime bug + 1 non-blocking + mode change。
   - fix: userID verification no longer reports a false old/new comparison when no previous snapshot exists
   - docs: README, README.en, and EXECUTE now match the new Chrome cleanup flow
 - 本轮验证结果：`bash -n scripts/claude-nuke-and-restore.sh` ✅；Phase 8 AppleScript 片段 `osacompile` 编译通过 ✅；`HOME=/Users/xin DRY_RUN=1 ./scripts/claude-nuke-and-restore.sh` 交互 dry-run 跑通，阶段 8 新提示和确认链路正常 ✅
+
+## 2026-04-19 11:53:00 EDT | Codex
+- 已落地 commit / tag / release：none
+- 改动文件范围：`scripts/claude-nuke-and-restore.sh`, `.ai/agent-release-notes.md`
+- 改动内容摘要：补上恢复阶段 hook 权限修复：在复制 `~/.claude/hooks/*.sh` 和 `~/.claude/read-once/*.sh` 后统一执行 `chmod +x`，避免源文件本身缺少 execute bit 时，恢复后的 hook 被 Claude 以 `/bin/sh: ... Permission denied` 方式拒绝执行。
+- 可直接复用的 release note bullets：
+  - fix: restored hook shell scripts now get `chmod +x` after copy
+  - fix: prevents post-restore hook `Permission denied` failures caused by non-executable source files
+- 本轮验证结果：`bash -n scripts/claude-nuke-and-restore.sh` ✅

@@ -893,6 +893,10 @@ else
     echo -e "  ${YELLOW}⚠️  未找到 hooks 备份；如需恢复，请先运行 backup-missing-to-safe-zone.sh${NC}"
 fi
 
+for f in "$HOME/.claude/hooks/"*.sh "$HOME/.claude/read-once/"*.sh; do
+    [ -f "$f" ] && dry chmod +x "$f"
+done
+
 # 17.5 Settings.json（优先最新备份的脱敏版，再 fallback 内置模板）
 SETTINGS_JSON_SRC=""
 for src in "$LATEST_BACKUP/settings-current-session-sanitized.json" "$SAFE_ZONE/settings.json"; do
