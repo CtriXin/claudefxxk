@@ -2,7 +2,7 @@
 
 Make Claude Code CLI not recognize this machine.
 
-**[中文版 →](README.md)**
+**[中文版 →](README.md)** · **[AI agents read →](AGENTS.md)**
 
 ---
 
@@ -27,7 +27,7 @@ Make Claude Code CLI not recognize this machine.
 | Capability |
 |------------|
 | Kill all Claude / claude / claude-code processes |
-| Delete `~/.claude.json` (Claude identity file) |
+| Delete `~/.claude.json` and all derived files (`.backup*`, `.tmp.*` temp identity snapshots, `*.bak*` third-party backups) |
 | Delete Claude credentials from Keychain |
 | Clean claude-code from npm cache |
 | Remove `~/.config/Claude` and Desktop App |

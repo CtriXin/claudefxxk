@@ -2,7 +2,7 @@
 
 让 Claude Code CLI 不认识这台电脑。
 
-**[English Version →](README.en.md)**
+**[English Version →](README.en.md)** · **[AI Agent 请读 →](AGENTS.md)**
 
 ---
 
@@ -27,7 +27,7 @@
 | 能力 |
 |------|
 | 终止所有 Claude / claude / claude-code 进程 |
-| 删除 `~/.claude.json`（Claude 身份文件） |
+| 删除 `~/.claude.json` 及其全部衍生文件（`.backup*`、`.tmp.*` 临时身份快照、`*.bak*` 第三方备份） |
 | 删除 Keychain 中的 Claude 凭证 |
 | 清理 npm cache 中的 claude-code |
 | 删除 `~/.config/Claude` 和 Desktop App |
