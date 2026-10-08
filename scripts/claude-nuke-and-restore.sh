@@ -476,6 +476,8 @@ echo "========================================"
 echo "阶段 2: 核心身份文件"
 echo "========================================"
 dry rm -f "$HOME/.claude.json" "$HOME/.claude.json.backup" "$HOME/.claude.json.backup."* "$HOME/.claude.json.bak"*
+# 清理第三方工具写 claude.json 时遗留的临时/备份文件（tmp 文件含完整身份 JSON，属旧指纹泄漏点）
+dry rm -f "$HOME/.claude.json.tmp."* "$HOME/.claude.json."*.bak*
 # 备份 .claude.bak 到项目目录后再清理
     BACKUP_DIR="$HOME/claude_safe_zone/backups/backup-$TIMESTAMP"
     dry mkdir -p "$BACKUP_DIR"
